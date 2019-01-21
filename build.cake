@@ -1,0 +1,64 @@
+#tool "nuget:?package=NUnit.ConsoleRunner"
+//////////////////////////////////////////////////////////////////////
+// ARGUMENTS
+//////////////////////////////////////////////////////////////////////
+
+var target = Argument("target", "Default");
+var configuration = Argument("configuration", "Debug");
+
+//////////////////////////////////////////////////////////////////////
+// PREPARATION
+//////////////////////////////////////////////////////////////////////
+
+// Define directories.
+var buildDir = Directory("./BuildProject/bin");
+var testBuildDir = Directory("./BuildProject.Tests/bin") + Directory(configuration);
+
+//////////////////////////////////////////////////////////////////////
+// TASKS
+//////////////////////////////////////////////////////////////////////
+
+Task("Clean")
+    .Does(() =>
+	{
+		CleanDirectory(buildDir);
+		CleanDirectory(testBuildDir);
+	});
+
+Task("Restore-NuGet-Packages")
+    .IsDependentOn("Clean")
+    .Does(() =>
+	{
+		NuGetRestore("./BuildProject.sln");
+	});
+
+Task("Build")
+    .IsDependentOn("Restore-NuGet-Packages")
+    .Does(() =>
+	{
+		// Use MSBuild
+		MSBuild("./BuildProject.sln", settings =>
+			settings.SetConfiguration(configuration));
+	});
+
+Task("Run-Unit-Tests")
+    .IsDependentOn("Build")
+    .Does(() =>
+	{
+		NUnit3("./BuildProject.Tests/bin/" + configuration + "/BuildProject.Tests.dll", new NUnit3Settings {
+			NoResults = true
+		});
+	});
+
+//////////////////////////////////////////////////////////////////////
+// TASK TARGETS
+//////////////////////////////////////////////////////////////////////
+
+Task("Default")
+    .IsDependentOn("Run-Unit-Tests");
+
+//////////////////////////////////////////////////////////////////////
+// EXECUTION
+//////////////////////////////////////////////////////////////////////
+
+RunTarget(target);

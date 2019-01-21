@@ -9,6 +9,7 @@ namespace BuildProject.Tests
         [Test]
         public void TestMethod1()
         {
+            //Test
             Assert.That(true, Is.True);  
         }
     }
